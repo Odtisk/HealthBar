@@ -16,23 +16,34 @@ public class HealthBar : MonoBehaviour
         _previousHealthNormalized = _player.NormalizedHealth;
     }
 
-    private void Update()
+    private void OnEnable()
+    {
+        _player.HealthChanged += OnHelathChanged;
+    }
+
+    private void OnDisable()
+    {
+        _player.HealthChanged -= OnHelathChanged;
+    }
+
+    private void OnHelathChanged()
     {
         _realHealthView.value = _player.NormalizedHealth;
 
-        if (_player.NormalizedHealth < _previousHealthNormalized && _previousHealthJob == null)
-        {
-            _previousHealthJob = StartCoroutine(ShowDamage());
-        }
-        else if (_player.NormalizedHealth > _previousHealthNormalized)
+        if (_player.NormalizedHealth > _previousHealthNormalized)
         {
             _previousHealthNormalized = _player.NormalizedHealth;
             _previousHealthView.value = _previousHealthNormalized;
         }
-        else if (_player.NormalizedHealth == _previousHealthNormalized && _previousHealthJob != null)
+        else if (_player.NormalizedHealth < _previousHealthNormalized)
         {
-            StopCoroutine(_previousHealthJob);
-            _previousHealthJob = null;
+            if (_previousHealthJob != null)
+            {
+                StopCoroutine(_previousHealthJob);
+                _previousHealthJob = null;
+            }
+
+            _previousHealthJob = StartCoroutine(ShowDamage());
         }
     }
 
@@ -40,14 +51,14 @@ public class HealthBar : MonoBehaviour
     {
         var delay = new WaitForSeconds(0.7f);
         var timeStep = new WaitForSeconds(0.01f);
+        float startValue = _previousHealthNormalized;
         yield return delay;
 
         for (float i = 0; i <= 1; i += 0.01f)
         {
-            _previousHealthView.value = Mathf.MoveTowards(_previousHealthNormalized, _player.NormalizedHealth, i);
+            _previousHealthNormalized = Mathf.MoveTowards(startValue, _player.NormalizedHealth, i);
+            _previousHealthView.value = _previousHealthNormalized;
             yield return timeStep;
         }
-
-        _previousHealthNormalized = _player.NormalizedHealth;
     }
 }

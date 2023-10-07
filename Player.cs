@@ -1,8 +1,11 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Player : MonoBehaviour
 {
     [SerializeField] private float _maxHealth = 100;
+    
+    public event UnityAction HealthChanged;
 
     public float Health { get; private set; }
     public float MaxHealth => _maxHealth;
@@ -15,17 +18,12 @@ public class Player : MonoBehaviour
 
     public void Heal(float receivedHealth)
     {
-        if (Health + receivedHealth < _maxHealth)
-            Health += receivedHealth;
-        else
-            Health = _maxHealth;
+        Health = Mathf.Clamp(Health + receivedHealth, 0, _maxHealth);
+        HealthChanged?.Invoke();
     }
 
     public void TakeDamage(float damage)
     {
-        if (Health > damage)
-            Health -= damage;
-        else
-            Health = 0;
+        Heal(damage * -1);
     }
 }
